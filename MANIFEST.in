@@ -1,0 +1,18 @@
+include MANIFEST.in
+include requirements.txt
+include *.json
+include *.md
+include *.py
+include *.txt
+recursive-include init_hooks *.css
+recursive-include init_hooks *.csv
+recursive-include init_hooks *.html
+recursive-include init_hooks *.ico
+recursive-include init_hooks *.js
+recursive-include init_hooks *.json
+recursive-include init_hooks *.md
+recursive-include init_hooks *.png
+recursive-include init_hooks *.py
+recursive-include init_hooks *.svg
+recursive-include init_hooks *.txt
+recursive-exclude init_hooks *.pyc
