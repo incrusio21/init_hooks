@@ -1,3 +1,6 @@
+# Copyright (c) 2024, DAS and contributors
+# For license information, please see license.txt
+
 import frappe
 
 __version__ = '0.0.1'
@@ -18,7 +21,19 @@ def get_custom_method():
     
     for method, over_method in frappe.get_hooks("override_methods_custom", {}).items():
         from_module, from_method = module_name(method)
+        if len(over_method) > 1:
+            from_module = getattr(from_module, from_method)
+            from_method = over_method[0]
+          
         _, to_method = module_name(over_method[-1], True)
+
         setattr(from_module, from_method, to_method)
+
+    # for method, over_method in frappe.get_hooks("override_class_method_custom", {}).items():
+    #     module_class, from_method = method.rsplit(".", 1)
+    #     from_module, from_class = module_name(module_class)
+
+    #     _, to_method = module_name(over_method[-1], True)
+    #     setattr(getattr(from_module, from_class), from_method, to_method)
 
 get_custom_method()
