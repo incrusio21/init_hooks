@@ -9,6 +9,9 @@ app_color = "grey"
 app_email = "das@gmail.com"
 app_license = "MIT"
 
+after_sync = "init_hooks.sync.sync_override_method"
+after_migrate = "init_hooks.sync.sync_override_method"
+
 # Includes in <head>
 # ------------------
 

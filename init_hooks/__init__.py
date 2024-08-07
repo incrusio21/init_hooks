@@ -19,21 +19,42 @@ def get_custom_method():
     if not hasattr(frappe.local, "conf") or not frappe.db:
         return
     
-    for method, over_method in frappe.get_hooks("override_methods_custom", {}).items():
-        from_module, from_method = module_name(method)
-        if len(over_method) > 1:
-            from_module = getattr(from_module, from_method)
-            from_method = over_method[0]
-          
-        _, to_method = module_name(over_method[-1], True)
+    # pastikan table telah terbentuk
+    if not frappe.db.exists("DocType", "Override Methods"):
+        return
+    
+    override = frappe.db.sql("""
+        SELECT om.name, omd.original_method, omd.overwrite_method
+        FROM `tabOverride Methods` om, `tabOverride Methods Details` omd
+        WHERE om.name = omd.parent and om.disabled != 1
+        ORDER BY priority, om.modified, omd.idx
+    """, as_dict=1)
 
-        setattr(from_module, from_method, to_method)
+    for row in override:
+        original_module, original_method_name = frappe.get_module(row.name), row.original_method
+        if '.' in original_method_name:
+            class_name, class_method = original_method_name.rsplit(".", 1)
+            if not hasattr(original_module, class_name):
+                raise ImportError(
+                    "Class {0} does not exist in module {1}".format(class_name, original_method_name)
+                )
+            
+            original_module = getattr(original_module, class_name)
+            original_method_name = class_method
 
-    # for method, over_method in frappe.get_hooks("override_class_method_custom", {}).items():
-    #     module_class, from_method = method.rsplit(".", 1)
-    #     from_module, from_class = module_name(module_class)
+        if not hasattr(original_module, original_method_name):
+            raise ImportError(
+                "method {0} does not exist in module {1}".format(original_method_name, row.name)
+            )
+        
+        override_path, override_name = row.overwrite_method.rsplit(".", 1)
 
-    #     _, to_method = module_name(over_method[-1], True)
-    #     setattr(getattr(from_module, from_class), from_method, to_method)
+        override_module = frappe.get_module(override_path)
+        if not hasattr(override_module, override_name):
+            raise ImportError(
+                "method {0} does not exist in module {1}".format(override_name, override_module)
+            )
+        
+        setattr(original_module, original_method_name, getattr(override_module, override_name))
 
 get_custom_method()
